@@ -18,9 +18,8 @@ namespace TwoPlayerTagGame.GameProject
         private const float GroundFriction = 0.60f;
         private const float AirFriction = 0.62f;
 
-        // Constants for Vertical Movement
-        private const float Gravity = 3400f;    
-        private const float MaxFallSpeed = 1000f;
+        // Constants for Vertical Movement  
+        private const float MaxFallSpeed = 1500f;
         private const float MaxJumpTime = 0.35f;
         private const float JumpPower = -4500f;
         private const float JumpControlPower = 0.14f;
@@ -31,6 +30,7 @@ namespace TwoPlayerTagGame.GameProject
         private float MoveAcceleration;
 
         // Variables for Vertical Movement
+        private float Gravity = 3400f;
         public bool isGrounded;
         private bool isJumping;
         private bool wasJumping;
@@ -47,7 +47,6 @@ namespace TwoPlayerTagGame.GameProject
         private Vector2 NamePosition;
 
         public Texture2D SpriteTexture;
-        private Texture2D DuckingSprite;
         private Color SpriteColour;
 
 
@@ -60,6 +59,7 @@ namespace TwoPlayerTagGame.GameProject
         private Keys MoveLeftKey;
         private Keys MoveRightKey;
         private Keys MoveUpKey;
+        private Keys MoveDownKey;
         public Level Level { get; private set; }
 
         private Rectangle LocalBounds;
@@ -74,7 +74,7 @@ namespace TwoPlayerTagGame.GameProject
             }
         }
 
-        public Player(ContentManager content, Level level, Vector2 startingPosition, Keys moveLeft, Keys moveRight, Keys moveUp, string playerName)
+        public Player(ContentManager content, Level level, Vector2 startingPosition, Keys moveLeft, Keys moveRight, Keys moveUp, Keys moveDown, string playerName)
         {
             Level = level;
             Position = startingPosition;
@@ -84,6 +84,7 @@ namespace TwoPlayerTagGame.GameProject
             MoveLeftKey = moveLeft;
             MoveRightKey = moveRight;
             MoveUpKey = moveUp;
+            MoveDownKey = moveDown;
            
             LoadContent(content);
 
@@ -92,8 +93,7 @@ namespace TwoPlayerTagGame.GameProject
         public void LoadContent(ContentManager content)
         {
             TextFont = content.Load<SpriteFont>("TextFont");
-            DuckingSprite = content.Load<Texture2D>("PlayerSprites/WhiteSquare");
-            SpriteTexture = DuckingSprite;
+            SpriteTexture = content.Load<Texture2D>("PlayerSprites/WhiteSquare");
 
             SetLocalBounds();
         }
@@ -142,6 +142,15 @@ namespace TwoPlayerTagGame.GameProject
             else if (keyboardState.IsKeyDown(MoveRightKey))
             {
                 Movement = 1.0f;
+            }
+
+            if (keyboardState.IsKeyDown(MoveDownKey))
+            {
+                Gravity = 8000f;
+            }
+            else
+            {
+                Gravity = 3400f;
             }
 
             isJumping = keyboardState.IsKeyDown(MoveUpKey);
@@ -238,7 +247,7 @@ namespace TwoPlayerTagGame.GameProject
                 {
                     TileCollision collision = Level.GetCollision(x, y);
                     if (collision != TileCollision.Passable)
-                    {
+                    {                       
                         Rectangle tileBounds = Level.GetBounds(x, y);
                         Vector2 depth = RectangleExtenstions.GetIntersectionDepth(bounds, tileBounds);
                         if (depth != Vector2.Zero)

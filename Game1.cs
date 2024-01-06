@@ -15,14 +15,17 @@ namespace TwoPlayerTagGame
 
         private Level level;
 
+        public static int GameWindowHeight = 720;
+        public static int GameWindowWidth = 1280;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _graphics.PreferredBackBufferHeight = 720;
-            _graphics.PreferredBackBufferWidth = 1280;
+            _graphics.PreferredBackBufferHeight = GameWindowHeight;
+            _graphics.PreferredBackBufferWidth = GameWindowWidth;
         }
 
         protected override void Initialize()
@@ -60,11 +63,9 @@ namespace TwoPlayerTagGame
             _spriteBatch.Begin();
 
             level.Draw(gameTime, _spriteBatch);
-
+                
             _spriteBatch.End();
-
-            
-
+          
             base.Draw(gameTime);
         }
     }

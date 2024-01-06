@@ -34,10 +34,22 @@ namespace TwoPlayerTagGame.GameProject
             public int y { get; set; }
         }
 
+        private string Title = "Two Player Tag";
+
+        private Button PlayButton;
+        private Texture2D PlayButtonSprite;
+
+        private Button LevelButton;
+        private Texture2D LevelButtonSprite;
+
+        private string Map;
+        private string MapName;
+        private int MapCode;
+
+        private SpriteFont TextSprite;
+
         private float tagTimer;
         private float CountdownTime;
-
-        private SpriteFont CountdownText;
 
         public ContentManager Content { get; private set; }
         public Player Player1 { get; private set; }
@@ -45,28 +57,59 @@ namespace TwoPlayerTagGame.GameProject
 
         private Tile[,] Tiles;
         private LevelState CurrentState;
-        private Vector2 StartingPosition1= new Vector2(400,500);
+        private Vector2 StartingPosition1 = new Vector2(400,500);
         private Vector2 StartingPosition2 = new Vector2(800, 500);
 
         public LevelData Data;
 
         public Level(IServiceProvider serviceProvider)
         {
-            Content = new ContentManager(serviceProvider, "Content");
-            CountdownText = Content.Load<SpriteFont>("TextFont");
-
+            CurrentState = LevelState.Menu;
             CountdownTime = 30f;
 
-            var LevelFile = File.ReadAllText("Map1.json");
-            Data = JsonSerializer.Deserialize<LevelData>(LevelFile);
+            Content = new ContentManager(serviceProvider, "Content");
+            TextSprite = Content.Load<SpriteFont>("TextFont");
+            PlayButtonSprite = Content.Load<Texture2D>("ButtonBorder");
+            LevelButtonSprite = Content.Load<Texture2D>("ButtonBorder");
 
-            LoadTiles();
+            #region PlayButton
 
-            Player1 = new Player(Content, this, StartingPosition1, Keys.A, Keys.D, Keys.W, "Player 1");
+            PlayButton = new Button(PlayButtonSprite, TextSprite)
+            {
+                Text = "Play"
+            };
+
+            PlayButton.SetPosition(Game1.GameWindowWidth / 2 - 100, Game1.GameWindowHeight / 2);
+
+            PlayButton.Click += (sender, e) =>
+            {
+                string levelpath = string.Format("C:/Users/Harve/Documents/MonoGame Projects/2PlayerTagGame/{0}", Map);
+                var LevelFile = File.ReadAllText(levelpath);
+                Data = JsonSerializer.Deserialize<LevelData>(LevelFile);
+                LoadTiles();
+                CurrentState = LevelState.Game;
+            };
+
+            #endregion
+
+            #region LevelButton
+
+            LevelButton = new Button(LevelButtonSprite, TextSprite);
+
+            LevelButton.SetPosition(Game1.GameWindowWidth / 2 + 100, Game1.GameWindowHeight / 2);
+
+            LevelButton.Click += (sender, e) =>
+            {
+                MapCode++;
+            };
+
+
+            #endregion
+
+
+            Player1 = new Player(Content, this, StartingPosition1, Keys.A, Keys.D, Keys.W, Keys.S, "Player 1");
             Player1.tagged = true;
-            Player2 = new Player(Content, this, StartingPosition2, Keys.J, Keys.L, Keys.I, "Player 2");
-
-
+            Player2 = new Player(Content, this, StartingPosition2, Keys.J, Keys.L, Keys.I, Keys.K, "Player 2");
 
         }
 
@@ -122,9 +165,58 @@ namespace TwoPlayerTagGame.GameProject
             return new Rectangle(x * Tile.Width, y * Tile.Height, Tile.Width, Tile.Height);
         }
 
+        public void UpdateMenu(GameTime gameTime)
+        {
+            switch (MapCode)
+            {
+                case 0:
+                    Map = "Map1.json";
+                    MapName = "Map 1";
+                    break;
+                case 1:
+                    Map = "Map2.json";
+                    MapName = "Map 2";
+                    break;
+                case 2:
+                    Map = "Map3.json";
+                    MapName = "Map 3";
+                    break;
+                case 3:
+                    Map = "Map4.json";
+                    MapName = "Map 4";
+                    break;
+                case 4:
+                    MapCode = 0;    
+                    break;
+            }
+
+            LevelButton.Text = MapName;
+        }
+
+        public void DrawMenu(GameTime gameTime, SpriteBatch spriteBatch)
+        {
+            spriteBatch.DrawString( // SpriteFont, Text, Position, Colour, Rotation, Origin, Scale, SpriteEffects, LayerDepth
+                TextSprite, 
+                Title, 
+                new Vector2(Game1.GameWindowWidth / 2, Game1.GameWindowHeight / 4),
+                Color.Black,
+                0f, 
+                new Vector2(TextSprite.MeasureString(Title).X / 2, 0),
+                2.5f,
+                SpriteEffects.None,
+                0);
+        }
+
         public void Update(GameTime gameTime)
         {
-            if (CurrentState == LevelState.Gameover)
+            if (CurrentState == LevelState.Menu)
+            {
+                UpdateMenu(gameTime);
+                PlayButton.Update(gameTime);
+                LevelButton.Update(gameTime);
+                return;
+            }
+            else if (CurrentState == LevelState.Gameover)
             {
                 return;
             }
@@ -160,20 +252,28 @@ namespace TwoPlayerTagGame.GameProject
 
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
+            if (CurrentState == LevelState.Menu)
+            {
+                DrawMenu(gameTime, spriteBatch);
+                PlayButton.Draw(gameTime, spriteBatch);
+                LevelButton.Draw(gameTime, spriteBatch);
+                return;
+            }
+
             DrawTiles(spriteBatch);
             Player1.Draw(gameTime, spriteBatch);
             Player2.Draw(gameTime, spriteBatch);
-            spriteBatch.DrawString(CountdownText, Math.Truncate(CountdownTime).ToString(), new Vector2(100,100), Color.White);
+            spriteBatch.DrawString(TextSprite, Math.Truncate(CountdownTime).ToString(), new Vector2(100,100), Color.Black);
 
             if (CountdownTime < 0)
             {
                 if (Player1.tagged == true)
                 {
-                    spriteBatch.DrawString(CountdownText, "Player 2 Wins", new Vector2(500, 300), Color.Black);
+                    spriteBatch.DrawString(TextSprite, "Player 2 Wins", new Vector2(500, 300), Color.Black);
                 }
                 else
                 {
-                    spriteBatch.DrawString(CountdownText, "Player 1 Wins", new Vector2(500, 300), Color.Black);
+                    spriteBatch.DrawString(TextSprite, "Player 1 Wins", new Vector2(500, 300), Color.Black);
                 }
             }
         }
